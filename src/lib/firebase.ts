@@ -40,7 +40,9 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 
 // CRITICAL: Must use firestoreDatabaseId from firebase-applet-config.json
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = firebaseConfig.firestoreDatabaseId 
+  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+  : getFirestore(app);
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
