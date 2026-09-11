@@ -2708,7 +2708,8 @@ How can I assist your capacity building today?`,
   });
 
   // Vite middleware for development vs static build in production
-  if (process.env.NODE_ENV !== "production") {
+  const isProduction = process.env.NODE_ENV === "production" || process.argv[1]?.endsWith("server.cjs");
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa"
@@ -2722,8 +2723,8 @@ How can I assist your capacity building today?`,
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[SkillForge AI] Server running on http://0.0.0.0:${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`[SkillForge AI] Server running on http://localhost:${PORT}`);
     console.log(`[SkillForge AI] Gemini AI initialized: ${!!ai}`);
   });
 }
