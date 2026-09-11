@@ -1,0 +1,99 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Official officer profile, placement cadre, and competency baseline.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 150 },
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["employee", "trainer", "admin"] },
+        "employeeId": { "type": "string", "maxLength": 100 },
+        "designation": { "type": "string", "maxLength": 150 },
+        "department": { "type": "string", "maxLength": 200 },
+        "jobRole": { "type": "string", "maxLength": 200 },
+        "currentAssignment": { "type": "string", "maxLength": 250 },
+        "organization": { "type": "string", "maxLength": 200 },
+        "experienceYears": { "type": "number" },
+        "education": { "type": "string", "maxLength": 150 },
+        "overallCompetency": { "type": "number" },
+        "learningHours": { "type": "number" },
+        "coursesCompleted": { "type": "number" },
+        "streakDays": { "type": "number" },
+        "onboardingCompleted": { "type": "boolean" },
+        "targetRole": { "type": "string", "maxLength": 200 },
+        "createdAt": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "name", "email", "role", "designation", "department"]
+    },
+    "QuizAttempt": {
+      "title": "QuizAttempt",
+      "description": "Official assessment submission and competency evaluation results.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "quizId": { "type": "string", "maxLength": 100 },
+        "quizTitle": { "type": "string", "maxLength": 200 },
+        "domain": { "type": "string", "maxLength": 100 },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "percentage": { "type": "number" },
+        "passed": { "type": "boolean" },
+        "attemptDate": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "userId", "quizId", "score", "maxScore", "passed"]
+    },
+    "CourseEnrollment": {
+      "title": "CourseEnrollment",
+      "description": "Officer enrollment and modular completion tracking for iGOT courses.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "courseId": { "type": "string", "maxLength": 100 },
+        "courseTitle": { "type": "string", "maxLength": 200 },
+        "status": { "type": "string", "enum": ["enrolled", "in-progress", "completed"] },
+        "progress": { "type": "number" },
+        "enrolledAt": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "userId", "courseId", "status", "progress"]
+    },
+    "PeerCircle": {
+      "title": "PeerCircle",
+      "description": "Collaborative study circles across statistical cadres.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "domain": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 500 },
+        "creatorId": { "type": "string", "maxLength": 128 },
+        "membersCount": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "title", "domain", "creatorId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile information and competency tracking"
+    },
+    "/quizAttempts/{attemptId}": {
+      "schema": "QuizAttempt",
+      "description": "Official competency quiz and diagnostic attempts"
+    },
+    "/courseEnrollments/{enrollmentId}": {
+      "schema": "CourseEnrollment",
+      "description": "Officer iGOT course enrollments and progress"
+    },
+    "/peerCircles/{circleId}": {
+      "schema": "PeerCircle",
+      "description": "Cadre study circles and collaboration groups"
+    }
+  }
+}

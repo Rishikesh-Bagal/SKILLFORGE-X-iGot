@@ -1,0 +1,6 @@
+{
+  "name": "SkillForge AI",
+  "description": "AI-Powered Competency Intelligence & Learning Copilot for India's Official Statistical System - SIH 2026",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

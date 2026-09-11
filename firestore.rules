@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global helper functions
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token != null && request.auth.token.role == 'admin') ||
+        (resource != null && resource.data != null && resource.data.role == 'admin')
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Validation for UserProfile
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'role', 'designation', 'department']) &&
+        data.id is string && isValidId(data.id) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 150 &&
+        data.email is string && data.email.size() > 0 && data.email.size() <= 150 &&
+        data.role in ['employee', 'trainer', 'admin'] &&
+        data.designation is string && data.designation.size() <= 150 &&
+        data.department is string && data.department.size() <= 200 &&
+        (!('experienceYears' in data) || data.experienceYears is number) &&
+        (!('overallCompetency' in data) || data.overallCompetency is number) &&
+        (!('learningHours' in data) || data.learningHours is number);
+    }
+
+    // Validation for QuizAttempt
+    function isValidQuizAttempt(data) {
+      return data.keys().hasAll(['id', 'userId', 'quizId', 'score', 'maxScore', 'passed']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && isValidId(data.userId) &&
+        data.quizId is string && data.quizId.size() <= 100 &&
+        data.score is number &&
+        data.maxScore is number &&
+        data.passed is bool;
+    }
+
+    // Validation for CourseEnrollment
+    function isValidCourseEnrollment(data) {
+      return data.keys().hasAll(['id', 'userId', 'courseId', 'status', 'progress']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && isValidId(data.userId) &&
+        data.courseId is string && data.courseId.size() <= 100 &&
+        data.status in ['enrolled', 'in-progress', 'completed'] &&
+        data.progress is number;
+    }
+
+    // Validation for PeerCircle
+    function isValidPeerCircle(data) {
+      return data.keys().hasAll(['id', 'title', 'domain', 'creatorId']) &&
+        data.id is string && isValidId(data.id) &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+        data.domain is string && data.domain.size() <= 100 &&
+        data.creatorId is string && isValidId(data.creatorId);
+    }
+
+    // Connection test document
+    match /test/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) &&
+        isValidId(userId) &&
+        incoming().id == userId &&
+        isValidUserProfile(incoming()) &&
+        (incoming().role == 'employee' || isAdmin());
+      allow update: if (isOwner(userId) || isAdmin()) &&
+        isValidUserProfile(incoming()) &&
+        // Prevent unauthorized privilege escalation
+        (isAdmin() || incoming().role == existing().role);
+      allow delete: if isAdmin();
+    }
+
+    // Quiz and competency test attempts
+    match /quizAttempts/{attemptId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(attemptId) &&
+        incoming().id == attemptId &&
+        incoming().userId == request.auth.uid &&
+        isValidQuizAttempt(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    // Course Enrollments
+    match /courseEnrollments/{enrollmentId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() &&
+        isValidId(enrollmentId) &&
+        incoming().id == enrollmentId &&
+        incoming().userId == request.auth.uid &&
+        isValidCourseEnrollment(incoming());
+      allow update: if isSignedIn() &&
+        (existing().userId == request.auth.uid || isAdmin()) &&
+        isValidCourseEnrollment(incoming()) &&
+        incoming().userId == existing().userId;
+      allow delete: if isAdmin();
+    }
+
+    // Peer Circles
+    match /peerCircles/{circleId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        isValidId(circleId) &&
+        incoming().id == circleId &&
+        incoming().creatorId == request.auth.uid &&
+        isValidPeerCircle(incoming());
+      allow update: if isSignedIn() && (existing().creatorId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (existing().creatorId == request.auth.uid || isAdmin());
+    }
+
+    // Fallback deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
